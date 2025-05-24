@@ -36,6 +36,16 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     public function save(Expense $expense): void
     {
         // TODO: Implement save() method.
+        $query = 'INSERT INTO expenses (user_id, date, category, amount_cents, description) 
+                  VALUES (:user_id, :date, :category, :amount_cents, :description)';
+        $statement = $this->pdo->prepare($query);
+        $statement->execute([
+            'user_id' => $expense->getUserId(),
+            'date' => $expense->getDate()->format('Y-m-d'),
+            'category' => $expense->getCategory(),
+            'amount_cents' => $expense->getAmountCents(),
+            'description' => $expense->getDescription(),
+        ]);
     }
 
     public function delete(int $id): void
@@ -47,7 +57,21 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     public function findBy(array $criteria, int $from, int $limit): array
     {
         // TODO: Implement findBy() method.
-        return [];
+        $query = 'SELECT * FROM expenses WHERE criteria = :criteria LIMIT :from, :limit';
+        $statement = $this->pdo->prepare($query);
+        $statement->bindValue(':criteria', json_encode($criteria), PDO::PARAM_STR);
+        $statement->bindValue(':from', $from, PDO::PARAM_INT);
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+        $data = $statement->fetchAll();
+        if (false === $data) {
+            return [];
+        }
+        $expenses = [];
+        foreach ($data as $item) {
+            $expenses[] = $this->createExpenseFromData($item);
+        }
+        return $expenses;
     }
 
 

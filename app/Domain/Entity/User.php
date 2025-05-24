@@ -14,4 +14,24 @@ final class User
         public string $passwordHash,
         public DateTimeImmutable $createdAt,
     ) {}
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+    public function getUsername(): string
+    {
+        return $this->username;
+    }
+    public function getPassword(): string
+    {
+        return $this->passwordHash;
+    }
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
 }
