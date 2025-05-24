@@ -30,15 +30,30 @@ class ExpenseController extends BaseController
         // - use the expense service to fetch expenses for the current user
 
         // parse request parameters
-        $userId = 1; // TODO: obtain logged-in user ID from session
+        $userId = $_SESSION['user_id'] ?? null; // TODO: obtain logged-in user ID from session
+        if (!$userId) {
+            return $response->withHeader('Location', '/login')->withStatus(302);
+        }
         $page = (int)($request->getQueryParams()['page'] ?? 1);
         $pageSize = (int)($request->getQueryParams()['pageSize'] ?? self::PAGE_SIZE);
+        $year = (int)($request->getQueryParams()['year'] ?? date('Y'));
+        $month = (int)($request->getQueryParams()['month'] ?? date('n'));
 
-        $expenses = $this->expenseService->list($userId, $page, $pageSize);
+
+        $user = new \App\Domain\Entity\User($userId, '', '', new \DateTimeImmutable());
+
+        $expenses = $this->expenseService->list($user, $year, $month, $page, $pageSize);
+
+        
+        $availableYears = $this->expenseService->getAvailableYears($user);
 
         return $this->render($response, 'expenses/index.twig', [
-            'expenses' => $expenses,
-            'page'     => $page,
+            'expenses' => $result['expenses'],
+            'pagination' => $result['pagination'],
+            'currentYear' => $year,
+            'currentMonth' => $month,
+            'availableYears' => $availableYears,
+            'page' => $page,
             'pageSize' => $pageSize,
         ]);
     }

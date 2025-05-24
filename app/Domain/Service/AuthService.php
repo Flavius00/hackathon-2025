@@ -32,8 +32,12 @@ class AuthService
             throw new \InvalidArgumentException('Username and password cannot be empty.');
         }
 
-        if(strlen($password) < 8 || !preg_match('/\d/', $password)) {
+        if(strlen($password) < 8) {
             throw new \InvalidArgumentException('Password must be at least 8 characters long.');
+        }
+
+        if(!preg_match('/\d/', $password)){
+            throw new \InvalidArgumentException('Password must contain at least one digit.');
         }
 
         $password = password_hash($password, PASSWORD_DEFAULT);
