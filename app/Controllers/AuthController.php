@@ -91,7 +91,7 @@ class AuthController extends BaseController
     public function logout(Request $request, Response $response): Response
     {
         // TODO: handle logout by clearing session data and destroying session
-        if (session_status() === PHP_SESSION_NONE) {
+        if (session_status() !== PHP_SESSION_NONE) {
             $userId = $_SESSION['user_id'] ?? null;
             $this->logger->info('User logged out', ['user_id' => $userId]);
 
