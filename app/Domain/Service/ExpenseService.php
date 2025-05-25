@@ -17,6 +17,35 @@ class ExpenseService
         private readonly \Psr\Log\LoggerInterface $logger,
     ) {}
 
+     public function getCategories(): array
+    {
+        // Load categories from .env if available, otherwise use keys from budgets
+        $categoriesJson = $_ENV['CATEGORIES'] ?? '';
+        if (!empty($categoriesJson)) {
+            $decoded = json_decode($categoriesJson, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        
+        // Fallback to category budget keys
+        return [];
+    }
+
+    public function isValidCategory(string $category): bool
+    {
+        $categoriesJson = $_ENV['CATEGORIES'] ?? '';
+        if (!empty($categoriesJson)) {
+            $decoded = json_decode($categoriesJson, true);
+            if (is_array($decoded)) {
+                return in_array($category, $decoded, true);
+            }
+        }
+
+        // Fallback to category budget keys
+        return [];
+    }
+
     public function list(User $user, int $year, int $month, int $pageNumber, int $pageSize): array
     {
         // TODO: implement this and call from controller to obtain paginated list of expenses

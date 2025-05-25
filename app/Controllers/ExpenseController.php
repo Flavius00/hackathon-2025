@@ -71,8 +71,7 @@ class ExpenseController extends BaseController
         // Hints:
         // - obtain the list of available categories from configuration and pass to the view
 
-        $alertGenerator = new AlertGenerator();
-        $categories = $alertGenerator->getCategories();
+        $categories = $this->expenseService->getCategories();
         $this->logger->info('Available categories for expenses', ['categories' => $categories]);
 
         return $this->render($response, 'expenses/create.twig', ['categories' => $categories]);
@@ -136,7 +135,7 @@ class ExpenseController extends BaseController
 
             // Rerender the create page with error messages
             return $this->render($response, 'expenses/create.twig', [
-                'categories' => (new AlertGenerator())->getCategories(),
+                'categories' => $this->expenseService->getCategories(),
                 'errors' => [$e->getMessage()],
                 'amount' => $amount,
                 'description' => $description,
@@ -163,8 +162,7 @@ class ExpenseController extends BaseController
             return $response->withStatus(404)->write('Expense not found');
         }
 
-        $alertGeneratorq = new AlertGenerator();
-        $categories = $alertGeneratorq->getCategories();
+        $categories = $this->expenseService->getCategories();
 
         return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => $categories]);
     }
@@ -245,7 +243,7 @@ class ExpenseController extends BaseController
             // Rerender the edit page with error messages
             return $this->render($response, 'expenses/edit.twig', [
                 'expense' => $expense,
-                'categories' => (new AlertGenerator())->getCategories(),
+                'categories' => $this->expenseService->getCategories(),
                 'errors' => [$e->getMessage()],
                 'amount' => $amount,
                 'description' => $description,

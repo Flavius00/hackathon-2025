@@ -168,19 +168,113 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
     public function sumAmountsByCategory(array $criteria): array
     {
         // TODO: Implement sumAmountsByCategory() method.
-        return [];
+        $conditions = [];
+        $params = [];
+
+        if (isset($criteria['user_id'])) {
+            $conditions[] = 'user_id = :user_id';
+            $params['user_id'] = $criteria['user_id'];
+        }
+
+        if (isset($criteria['year']) && isset($criteria['month'])) {
+            $conditions[] = 'strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+            $params['year'] = $criteria['year'];
+            $params['month'] = sprintf('%02d', (int)$criteria['month']);
+        }
+
+        $whereClause = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
+        $query = "SELECT category, SUM(amount_cents) AS total_amount 
+                  FROM expenses {$whereClause} 
+                  GROUP BY category 
+                  ORDER BY total_amount DESC";
+        $statement = $this->pdo->prepare($query);
+
+        foreach ($params as $key => $value) {
+            $statement->bindValue(":{$key}", $value);
+        }
+
+        $statement->execute();
+        $data = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($data as $row) {
+            $result[$row['category']] = (int)$row['total_amount'];
+        }
+
+        return $result;
     }
 
     public function averageAmountsByCategory(array $criteria): array
     {
         // TODO: Implement averageAmountsByCategory() method.
-        return [];
+        $conditions = [];
+        $params = [];
+
+        if (isset($criteria['user_id'])) {
+            $conditions[] = 'user_id = :user_id';
+            $params['user_id'] = $criteria['user_id'];
+        }
+
+        if (isset($criteria['year']) && isset($criteria['month'])) {
+            $conditions[] = 'strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+            $params['year'] = $criteria['year'];
+            $params['month'] = sprintf('%02d', (int)$criteria['month']);
+        }
+
+        $whereClause = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
+        $query = "SELECT category, AVG(amount_cents) AS average_amount 
+                  FROM expenses {$whereClause} 
+                  GROUP BY category 
+                  ORDER BY average_amount DESC";
+        $statement = $this->pdo->prepare($query);
+
+        foreach ($params as $key => $value) {
+            $statement->bindValue(":{$key}", $value);
+        }
+        $statement->execute();
+        $data = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($data as $row) {
+            $result[$row['category']] = (float)$row['average_amount'];
+        }
+
+        return $result;
     }
 
     public function sumAmounts(array $criteria): float
     {
         // TODO: Implement sumAmounts() method.
-        return 0;
+        $conditions = [];
+        $params = [];
+
+        if (isset($criteria['user_id'])) {
+            $conditions[] = 'user_id = :user_id';
+            $params['user_id'] = $criteria['user_id'];
+        }
+
+        if (isset($criteria['year']) && isset($criteria['month'])) {
+            $conditions[] = 'strftime("%Y", date) = :year AND strftime("%m", date) = :month';
+            $params['year'] = $criteria['year'];
+            $params['month'] = sprintf('%02d', (int)$criteria['month']);
+        }
+
+        $whereClause = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
+        $query = "SELECT SUM(amount_cents) AS total_amount FROM expenses {$whereClause}";
+
+        $statement = $this->pdo->prepare($query);
+        foreach ($params as $key => $value) {
+            $statement->bindValue(":{$key}", $value);
+        }
+
+        $statement->execute();
+        $total = $statement->fetchColumn();
+
+        if ($total === false) {
+            return 0.0; // No expenses found
+        }
+
+        return $total;
     }
 
     /**
