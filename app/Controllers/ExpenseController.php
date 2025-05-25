@@ -88,7 +88,7 @@ class ExpenseController extends BaseController
         // - rerender the "expenses.create" page with included errors in case of failure
         // - redirect to the "expenses.index" page in case of success
 
-        $userId = $_SESSION['user_id'] ?? null; // TODO: obtain logged-in user ID from session
+        $userId = $_SESSION['user_id'] ?? null;
 
         $params = $request->getParsedBody();
         $amount = ($params['amount'] ?? '');
@@ -180,12 +180,23 @@ class ExpenseController extends BaseController
         // - update the expense entity with the new values
         // - rerender the "expenses.edit" page with included errors in case of failure
         // - redirect to the "expenses.index" page in case of success
+
+        $userId = $_SESSION['user_id'] ?? null; 
+
         $expenseId = (int)$routeParams['id'];
         $expense = $this->expenseService->getExpenseById($expenseId);
 
         if (!$expense) {
             $this->logger->error('Expense not found', ['expenseId' => $expenseId]);
             return $response->withStatus(404)->write('Expense not found');
+        }
+
+        if($expense->$userId !== $userId) {
+            $this->logger->error('User does not have permission to edit this expense', [
+                'expenseId' => $expenseId,
+                'userId' => $userId
+            ]);
+            return $response->withStatus(403)->write('Forbidden');
         }
 
         $data = $request->getParsedBody();
@@ -253,6 +264,33 @@ class ExpenseController extends BaseController
         // - call the repository method to delete the expense
         // - redirect to the "expenses.index" page
 
-        return $response;
+        $userId = $_SESSION['user_id'] ?? null;
+        $expenseId = (int)$routeParams['id'];
+        $expense = $this->expenseService->getExpenseById($expenseId);
+
+        if (!$expense) {
+            $this->logger->error('Expense not found', ['expenseId' => $expenseId]);
+            return $response->withStatus(404)->write('Expense not found');
+        }
+
+        if($userId !== $expense->userId) {
+            $this->logger->error('User does not have permission to delete this expense', [
+                'expenseId' => $expenseId,
+                'userId' => $userId
+            ]);
+            return $response->withStatus(403)->write('Forbidden');
+        }
+
+        try{
+            $this->expenseService->delete($expense);
+
+            $this->logger->info('Expense deleted successfully', ['expenseId' => $expenseId]);
+
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        } catch (\Exception $e) {
+            // Log the error and return a 500 response
+            $this->logger->error('Failed to delete expense', ['error' => $e->getMessage()]);
+            return $response->withStatus(500)->write('Internal Server Error');
+        }
     }
 }

@@ -60,6 +60,12 @@ class ExpenseService
         return $this->expenses->find($id);
     }
 
+    public function delete(Expense $expense): void
+    {
+        $this->expenses->delete($expense->id);
+        $this->logger->info('Deleted expense', ['id' => $expense->id]);
+    }
+
     public function create(
         User $user,
         float $amount,
