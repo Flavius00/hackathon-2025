@@ -270,7 +270,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         $statement->execute();
         $total = $statement->fetchColumn();
 
-        if ($total === false) {
+        if ($total === null) {
             return 0.0; // No expenses found
         }
 
