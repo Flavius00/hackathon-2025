@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface as LoggerInterface;
 use App\Domain\Service\MonthlySummaryService as MonthlySummaryService;
 use App\Domain\Service\AlertGenerator as AlertGenerator;
 use App\Domain\Repository\UserRepositoryInterface as UserRepositoryInterface;
+use App\Domain\Service\ExpenseService as ExpenseService;
 use Slim\Views\Twig;
 
 class DashboardController extends BaseController
@@ -17,10 +18,11 @@ class DashboardController extends BaseController
     public function __construct(
         Twig $view,
         // TODO: add necessary services here and have them injected by the DI container
-        private readonly MonthlySummaryService $monthlySummaryService,
+        private readonly MonthlySummaryService $summaryService,
         private readonly AlertGenerator $alertGenerator,
         private readonly UserRepositoryInterface $userRepository,
         private readonly LoggerInterface $logger,
+        private readonly ExpenseService $expenseService,
     )
     {
         parent::__construct($view);
@@ -47,15 +49,25 @@ class DashboardController extends BaseController
         $year = (int)($queryParams['year'] ?? date('Y'));
         $month = (int)($queryParams['month'] ?? date('m'));
 
-        $availableYears = $this->monthlySummaryService->getAvailableYears();
+        $availableYears = $this->expenseService->getAvailableYears($user);
 
         $currentYear = (int)date('Y');
         $currentMonth = (int)date('m');
-        $alerts = $this->alertGenerator->generateAlerts($user, $year, $month);
+        $alerts = $this->alertGenerator->generate($user, $year, $month);
 
-        $totalForMonth = $this->monthlySummaryService->getTotalExpenditure($user, $year, $month);
-        $totalsForCategories = $this->monthlySummaryService->getCategoryTotals($user, $year, $month);
-        $averagesForCategories = $this->monthlySummaryService->getCategoryAverages($user, $year, $month);
+        $totalForMonth = $this->summaryService->computeTotalExpenditure($user, $year, $month);
+        $totalsForCategories = $this->summaryService->computePerCategoryTotals($user, $year, $month);
+        $avgForCategories = $this->summaryService->computePerCategoryAverages($user, $year, $month);
+
+        // Log the dashboard access
+        $this->logger->info('Dashboard accessed', [
+            'userId' => $user->id,
+            'year' => $year,
+            'month' => $month,
+            'totalForMonth' => $totalForMonth,
+            'totalsForCategories' => $totalsForCategories,
+            'averagesForCategories' => $avgForCategories,
+        ]);
 
         return $this->render($response, 'dashboard.twig', [
             'selectedYear' => $year,
@@ -64,7 +76,7 @@ class DashboardController extends BaseController
             'alerts' => $alerts,
             'totalForMonth' => $totalForMonth,
             'totalsForCategories' => $totalsForCategories,
-            'averagesForCategories' => $averagesForCategories,
+            'averagesForCategories' => $avgForCategories,
         ]);
     }
 }

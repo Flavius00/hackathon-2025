@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Service;
 
 use App\Domain\Entity\User;
+use App\Domain\Repository\ExpenseRepositoryInterface;
 
 class AlertGenerator
 {

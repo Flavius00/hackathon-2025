@@ -189,9 +189,9 @@ class ExpenseController extends BaseController
             return $response->withStatus(404)->write('Expense not found');
         }
 
-        if($expense->$userId !== $userId) {
+        if($expense->userId !== $userId) {
             $this->logger->error('User does not have permission to edit this expense', [
-                'expenseId' => $expenseId,
+                'expenseId' => $expense,
                 'userId' => $userId
             ]);
             return $response->withStatus(403)->write('Forbidden');
