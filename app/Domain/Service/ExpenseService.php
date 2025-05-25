@@ -14,6 +14,7 @@ class ExpenseService
 {
     public function __construct(
         private readonly ExpenseRepositoryInterface $expenses,
+        private readonly \Psr\Log\LoggerInterface $logger,
     ) {}
 
     public function list(User $user, int $year, int $month, int $pageNumber, int $pageSize): array
@@ -28,6 +29,9 @@ class ExpenseService
         $offset = ($pageNumber - 1) * $pageSize;
         $expenses = $this->expenses->findBy($criteria, $offset, $pageSize);
         $totalCount = $this->expenses->countBy($criteria);
+
+        $this->logger->info('Fetched expenses for user', $expenses);
+        $this->logger->info('Total expenses count', ['count' => $totalCount]);
 
         $totalPages = (int)ceil($totalCount / $pageSize);
         $hasNextPage = $pageNumber < $totalPages;

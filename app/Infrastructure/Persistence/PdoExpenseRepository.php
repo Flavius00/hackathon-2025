@@ -85,7 +85,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         if (isset($criteria['year']) && isset($criteria['month'])) {
             $conditions[] ='strftime("%Y", date) = :year AND strftime("%m", date) = :month';
             $params['year'] = $criteria['year'];
-            $params['month'] = $criteria['month'];
+            $params['month'] = sprintf('%02d', (int)$criteria['month']);
         }
 
         $whereClause = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);
@@ -103,9 +103,6 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         $statement->execute();
 
         $data = $statement->fetchAll(PDO::FETCH_ASSOC);
-        if (false === $data) {
-            return [];
-        }
 
         $expenses = [];
         foreach ($data as $row) {
@@ -129,7 +126,7 @@ class PdoExpenseRepository implements ExpenseRepositoryInterface
         if (isset($criteria['year']) && isset($criteria['month'])) {
             $conditions[] = 'strftime("%Y", date) = :year AND strftime("%m", date) = :month';
             $params['year'] = $criteria['year'];
-            $params['month'] = $criteria['month'];
+            $params['month'] = sprintf('%02d', (int)$criteria['month']);
         }
 
         $whereClause = empty($conditions) ? '' : 'WHERE ' . implode(' AND ', $conditions);

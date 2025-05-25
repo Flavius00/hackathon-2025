@@ -24,4 +24,33 @@ class AlertGenerator
 
         return [];
     }
+
+    public function getCategories(): array
+    {
+        // Load categories from .env if available, otherwise use keys from budgets
+        $categoriesJson = $_ENV['CATEGORIES'] ?? '';
+        if (!empty($categoriesJson)) {
+            $decoded = json_decode($categoriesJson, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        
+        // Fallback to category budget keys
+        return array_keys($this->categoryBudgets);
+    }
+
+    public function isValidCategory(string $category): bool
+    {
+        $categoriesJson = $_ENV['CATEGORIES'] ?? '';
+        if (!empty($categoriesJson)) {
+            $decoded = json_decode($categoriesJson, true);
+            if (is_array($decoded)) {
+                return in_array($category, $decoded, true);
+            }
+        }
+
+        // Fallback to category budget keys
+        return array_key_exists($category, $this->categoryBudgets);
+    }
 }
