@@ -13,19 +13,27 @@ class AlertGenerator
     // Hint: store them as JSON encoded in .env variable, inject them manually in a dedicated service,
     // then inject and use use that service wherever you need category/budgets information.
 
-    private array $categoryBudgets = [
-        'Groceries' => 300.00,
-        'Utilities' => 200.00,
-        'Transport' => 500.00,
-        'Entertainment' => 150.00,
-        'Healthcare' => 100.00,
-        'Housing' => 800.00,
-        'Other' => 100.00
-    ];
-
+    private array $categoryBudgets;
     public function __construct(
         private readonly ExpenseRepositoryInterface $expenseRepository
-    ) {}
+    ) {
+        $this->categoryBudgets = $this->loadCategoryBudgets();
+    }
+
+    private function loadCategoryBudgets(): array
+    {
+        $budgetsJson = $_ENV['CATEGORY_BUDGETS'] ?? '';
+        
+        if (!empty($budgetsJson)) {
+            $decoded = json_decode($budgetsJson, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        
+        // Fallback to default budgets if environment variable is not set or invalid
+        return [];
+    }
 
     public function generate(User $user, int $year, int $month): array
     {
