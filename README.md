@@ -104,10 +104,18 @@ A solution with passing analysis and unit tests will receive extra points.
 ## Delivery details
 
 Participant:
-- Full name: ...
-- Email address: ...
+- Full name: Turcu Flavius
+- Email address: flaviusturcu11@gmail.com
 
 Features fully implemented:
-- ...
+-Register
+-Login
+-Logout
+-Expenses – List
+-Expenses – Add
+-Expenses – Edit 
+-Expenses – Delete
+-Dashboard 
+-Expenses - CSV Import (as part of Expenses - List page)
 
 Other instructions about setting up the application (if any): ...
