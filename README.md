@@ -108,14 +108,24 @@ Participant:
 - Email address: flaviusturcu11@gmail.com
 
 Features fully implemented:
+
 -Register
+
 -Login
+
 -Logout
+
 -Expenses – List
+
 -Expenses – Add
+
 -Expenses – Edit 
+
 -Expenses – Delete
+
 -Dashboard 
+
 -Expenses - CSV Import (as part of Expenses - List page)
 
-Other instructions about setting up the application (if any): ...
+
+Other instructions about setting up the application (if any): no other instructions
