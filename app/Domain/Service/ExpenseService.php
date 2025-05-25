@@ -131,7 +131,85 @@ class ExpenseService
     {
         // TODO: process rows in file stream, create and persist entities
         // TODO: for extra points wrap the whole import in a transaction and rollback only in case writing to DB fails
+        $tempStream = fopen('php://temp', 'w+b');
+        if ($tempStream === false) {
+            throw new \RuntimeException('Failed to open temporary stream for CSV import');
+        }
 
-        return 0; // number of imported rows
+        $uploadedStream = $csvFile->getStream();
+        $uploadedStream->rewind();
+
+        while(!$uploadedStream->eof()) {
+           $chunk = $uploadedStream->read(8192);
+           fwrite($tempStream, $chunk);
+        }
+
+        rewind($tempStream);
+
+        $importedRows = 0;
+        $skippedRows = [];
+        $processedRows = [];
+
+        $validCategories = $this->getCategories();
+
+        while(($row = fgetcsv($tempStream)) !== false) {
+           if(count($row) < 4) {
+                continue;
+           }
+
+           [$dateStr,  $amountStr, $description , $category] = $row;
+
+           if(!in_array($category, $validCategories, true)) {
+                $this->logger->warning('Invalid category in CSV row', ['category' => $category]);
+                $skippedRows[] = [
+                    'row' => $row,
+                    'reason' => 'Invalid category: ' . $category
+                ];
+                continue;
+           }
+
+           $rowKey = $dateStr . '|' . $category . '|' . $amountStr . '|' . $description;
+           if(in_array($rowKey, $processedRows, true)) {
+                $skippedRows[] = [
+                    'row' => $row,
+                    'reason' => 'Duplicate row'
+                ];
+                continue;
+           }
+
+           try{
+                $date = new DateTimeImmutable($dateStr);
+                $amount = (float)$amountStr;
+
+                if($amount <= 0) {
+                    throw new \InvalidArgumentException('Amount must be greater than zero');
+                }
+
+                if(empty(trim($description))) {
+                    throw new \InvalidArgumentException('Description cannot be empty');
+                }
+
+                $this->create($user, $amount, trim($description), $date, $category);
+
+                $processedRows[] = $rowKey;
+                $importedRows++;
+           }catch(\Exception $e) {
+                $skippedRows[] = [
+                    'row' => $row,
+                    'reason' => 'Error: ' . $e->getMessage()
+                ];
+           }
+        }
+        fclose($tempStream);
+
+        if(!empty($skippedRows)) {
+            $this->logger->warning('Skipped rows during CSV import', [
+                'skippedRows' => $skippedRows,
+                'importedCount' => $importedRows
+            ]);
+        }
+
+        $this->logger->info('CSV import completed successfully', ['importedCount' => $importedRows]);
+        return $importedRows; // number of imported rows
     }
 }

@@ -67,7 +67,7 @@
                     <div class="relative">
                         <div class="bg-{{ colors[loop.index0 % colors|length] }}-600 h-8 rounded"
                              style="width: {{ data.percentage }}%">
-                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: €{{ data.amount / 100 |number_format(2) }}</span>
+                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: €{{ (data.amount / 100) | number_format(2) }}</span>
                         </div>
                     </div>
                 {% endfor %}
@@ -83,7 +83,7 @@
                     <div class="relative">
                         <div class="bg-{{ colors[loop.index0 % colors|length] }}-600 h-8 rounded"
                              style="width: {{ data.percentage }}%">
-                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: €{{ data.average / 100 |number_format(2) }}</span>
+                            <span class="absolute inset-0 flex items-center justify-start pl-4 text-white font-bold">{{ category }}: €{{ (data.average / 100) | number_format(2) }}</span>
                         </div>
                     </div>
                 {% endfor %}

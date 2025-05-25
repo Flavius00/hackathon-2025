@@ -291,4 +291,31 @@ class ExpenseController extends BaseController
             return $response->withStatus(500)->write('Internal Server Error');
         }
     }
+
+    public function import(Request $request, Response $response): Response
+    {
+        $userId = $_SESSION['user_id'] ?? null;
+        $uploadFile = $request->getUploadedFiles();
+
+        if (!isset($uploadFile['csv']) || $uploadFile['csv']->getError() !== UPLOAD_ERR_OK) {
+            $this->logger->error('CSV upload failed or no file provided');
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        }
+
+        $csvFile = $uploadFile['csv'];
+
+        try{
+            $user = new User($userId, '', '', new \DateTimeImmutable());
+            $importedCount = $this->expenseService->importFromCsv($user, $csvFile);
+
+            $this->logger->info('CSV import successful', ['importedCount' => $importedCount]);
+
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+        } catch (\Exception $e) {
+            // Log the error and return a 500 response
+            $this->logger->error('Failed to import CSV', ['error' => $e->getMessage()]);
+            return $response->withStatus(500)->write('Internal Server Error');
+        }
+
+    }
 }
