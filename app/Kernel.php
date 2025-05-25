@@ -77,8 +77,10 @@ class Kernel
         // Make current user ID globally available to twig templates
         // TODO: change the following line to set the user ID stored in the session, for when user is logged
         $loggedInUserId = $_SESSION['user_id'] ?? null;
+        $loggedInUserName = $_SESSION['username'] ?? ''; // Default to 'Guest' if not set
         $twig = $container->get(Twig::class);
         $twig->getEnvironment()->addGlobal('currentUserId', $loggedInUserId);
+        $twig->getEnvironment()->addGlobal('currentUserName', $loggedInUserName);
 
         return $app;
     }

@@ -144,8 +144,6 @@ class ExpenseController extends BaseController
                 'category' => $category,
             ]);
         }
-
-        return $response;
     }
 
     public function edit(Request $request, Response $response, array $routeParams): Response
@@ -157,9 +155,18 @@ class ExpenseController extends BaseController
         // - load the expense to be edited by its ID (use route params to get it)
         // - check that the logged-in user is the owner of the edited expense, and fail with 403 if not
 
-        $expense = ['id' => 1];
+        $expenseId = (int)$routeParams['id'];
+        $expense = $this->expenseService->getExpenseById($expenseId);
 
-        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => []]);
+        if (!$expense) {
+            $this->logger->error('Expense not found', ['expenseId' => $expenseId]);
+            return $response->withStatus(404)->write('Expense not found');
+        }
+
+        $alertGeneratorq = new AlertGenerator();
+        $categories = $alertGeneratorq->getCategories();
+
+        return $this->render($response, 'expenses/edit.twig', ['expense' => $expense, 'categories' => $categories]);
     }
 
     public function update(Request $request, Response $response, array $routeParams): Response
@@ -173,8 +180,68 @@ class ExpenseController extends BaseController
         // - update the expense entity with the new values
         // - rerender the "expenses.edit" page with included errors in case of failure
         // - redirect to the "expenses.index" page in case of success
+        $expenseId = (int)$routeParams['id'];
+        $expense = $this->expenseService->getExpenseById($expenseId);
 
-        return $response;
+        if (!$expense) {
+            $this->logger->error('Expense not found', ['expenseId' => $expenseId]);
+            return $response->withStatus(404)->write('Expense not found');
+        }
+
+        $data = $request->getParsedBody();
+        $amount = ($data['amount'] ?? '');
+        $description = ($data['description'] ?? '');
+        $date = ($data['date'] ?? '');
+        $category = ($data['category'] ?? '');
+
+        try{
+            if(empty($date)){
+                throw new \InvalidArgumentException('Date is required');
+            }
+
+            $expenseDate = new \DateTimeImmutable($date);
+            $today = new \DateTimeImmutable();
+            if ($expenseDate > $today) {
+                throw new \InvalidArgumentException('Expense date cannot be in the future');
+            }
+
+            if(empty($category)){
+                throw new \InvalidArgumentException('Category is required');
+            }
+
+            if (empty($amount) || !is_numeric($amount) || (float)$amount <= 0) {
+                throw new \InvalidArgumentException('Amount must be greater than 0.');
+            }
+
+            if (empty($description)) {
+                throw new \InvalidArgumentException('Description cannot be empty.');
+            }
+
+            $user = new User($userId, '', '', new \DateTimeImmutable());
+            $this->expenseService->update(
+                $expense,
+                (float)$amount,
+                $description,
+                $expenseDate,
+                $category
+            );
+            return $response->withHeader('Location', '/expenses')->withStatus(302);
+
+        }
+        catch (\InvalidArgumentException $e) {
+            $this->logger->error('Failed to update expense', ['error' => $e->getMessage()]);
+
+            // Rerender the edit page with error messages
+            return $this->render($response, 'expenses/edit.twig', [
+                'expense' => $expense,
+                'categories' => (new AlertGenerator())->getCategories(),
+                'errors' => [$e->getMessage()],
+                'amount' => $amount,
+                'description' => $description,
+                'date' => $date,
+                'category' => $category,
+            ]);
+        }
     }
 
     public function destroy(Request $request, Response $response, array $routeParams): Response

@@ -55,6 +55,11 @@ class ExpenseService
         return $this->expenses->listExpenditureYears($user);
     }
 
+    public function getExpenseById(int $id): ?Expense
+    {
+        return $this->expenses->find($id);
+    }
+
     public function create(
         User $user,
         float $amount,
@@ -65,7 +70,8 @@ class ExpenseService
         // TODO: implement this to create a new expense entity, perform validation, and persist
 
         // TODO: here is a code sample to start with
-        $expense = new Expense(null, $user->id, $date, $category, (int)$amount, $description);
+        $amountCents = $amount * 100;
+        $expense = new Expense(null, $user->id, $date, $category, (int)$amountCents, $description);
         $this->expenses->save($expense);
     }
 
@@ -77,6 +83,13 @@ class ExpenseService
         string $category,
     ): void {
         // TODO: implement this to update expense entity, perform validation, and persist
+        $amountCents = $amount * 100;
+        $expense->amountCents = (int)$amountCents;
+        $expense->description = $description;
+        $expense->date = $date;
+        $expense->category = $category;
+
+        $this->expenses->save($expense);
     }
 
     public function importFromCsv(User $user, UploadedFileInterface $csvFile): int
